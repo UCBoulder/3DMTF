@@ -34,12 +34,15 @@ This code was developed and tested with Python v.3.8.6. Other versions of Python
 Example Usage
 =============
 To see a list of supported command line arguments, use:
+
 ``python mtf3d.py -h``
 
 To run the LSF MTF method on a point cloud (using demo file 1 here), use this command in terminal:
+
 ``python mtf3d.py -i ./demo/1-single-alongtrack-lsfmtf.csv -o . -m lsf -r -v``
 
 To run the PSF MTF method on a point cloud (using demo file 4 here), use this command in terminal:
+
 ``python mtf3d.py -i ./demo/4-topographic-psfmtf.csv -o . -m psf -r -v``
 
 Primary command line arguments:
