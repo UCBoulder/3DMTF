@@ -30,7 +30,7 @@
 #           Example unit-test command entry in terminal or CMD:
 #           python 3dmtf.py (Just checks dependencies with no flags)
 #
-# @licence  MIT License
+# @license  MIT License
 #
 #           Copyright (c) 2024 Kevin W. Sacca
 #
@@ -138,8 +138,6 @@ def main(args):
    ## Compute MTF on ROIed data
    if args.method == 'psf':
       mtf, sf = PSFMTF(pc)
-   elif args.method == 'ctf':
-      mtf, sf = HISTCTF(pc)
    elif args.method == 'lsf':
       mtf, sf = LSFMTF(pc)
    elif args.method in ['esf', 'ctf']:
@@ -149,10 +147,25 @@ def main(args):
       pprint('ERROR: MTF method %s not an option. Only psf, lsf, esf, ctf.')
       sys.exit(1)
 
+   if args.view:
+      plt.figure(figsize=(7.5,5.42))
+      plt.plot(sf, mtf, c='C0')
+      plt.xlim([0, 15])
+      plt.ylim([0,1])
+      plt.xlabel(r'Spatial Frequency, $\xi$ $\left[\frac{cyc}{m}\right]$', fontsize=18)
+      plt.ylabel('MTF', fontsize=18)
+      xticks = np.arange(0, 16., 1)
+      yticks = np.arange(0, 1.1, 0.1)
+      plt.xticks(xticks, fontsize=14)
+      plt.yticks(yticks, fontsize=14)
+      plt.grid(ls='solid', c='k', alpha=0.15)
+      plt.tight_layout()
+      plt.show()
+
    return None
 
 
-def PSFMTF(pc):
+def PSFMTF(pc, sampling=0.001, tuning=1):
    """
    Compute PSF-based MTF from input point cloud data of a point-source target.
    Units of point cloud XYZ should be in meters for correct MTF plot scaling.
@@ -164,6 +177,9 @@ def PSFMTF(pc):
    5. Rotate all points about Z axis about centroid until they lie in X-Z plane
    6. Supersample the resulting 1D PSF to 1mm sampling
    7. Take Fourier Transform of supersampled PSF to get MTF
+
+   Sampling = new sampling of PSF. Default is 1mm.
+   Tuning = Scale factor 0-1 to adjust Tukey filter size if necessary.
    """
    # Warn if point cloud appears large
    if len(pc) > 50000:
@@ -171,8 +187,6 @@ def PSFMTF(pc):
       re = input('Proceed? ')
       if not re.lower() in ['y', 'yes']:
          sys.exit(1)
-
-   sampling = 0.001 # [m] (new sampling of PSF)
 
    ## 1. Threshold PSF target from background
    # Basic method used assumes there is sufficient contrast such that:
@@ -264,7 +278,7 @@ def PSFMTF(pc):
    psf_rs = rs_linear(bins_rs)
 
    ## 7. Apply Tukey Filter
-   tukey_scale = 3.0 # scale factor * FWHM
+   tukey_scale = 4.0 * tuning # scale factor * FWHM
    window_size = np.min([np.max([np.round(tukey_scale * fwhm_x_est * (1/sampling)).astype(int), np.round(tukey_scale * fwhm_y_est * (1/sampling)).astype(int)]), bins_rs.shape[0]])
    alpha = 0.8
    tukey = sig.windows.tukey(window_size, alpha=alpha)
@@ -298,17 +312,6 @@ def PSFMTF(pc):
 
    psf_tukey = psf_rs_n * tukey_pad
 
-   # Plot (Similar components as old image-based MTF)
-   if args.view:
-      plt.scatter(bins, psf_norm, c='g')
-      plt.plot(bins_rs, psf_rs_n, 'r')
-      plt.plot(bins_rs, tukey_pad, 'k')
-      plt.plot(bins_rs, psf_tukey, 'b')
-      plt.legend(['Points', 'Resampled Point Cloud PSF', r'Tukey Filter $(\alpha = %.1f)$' % (alpha), 'Tukey-Filtered Resampled PSF'], loc='upper right')
-      plt.xlabel('Radius from Centroid [m]')
-      plt.ylabel('Normalized Z [m]')
-      plt.show()
-
    ## 8. Take Fourier Transform!
    # Normalize the PSF so sum = 1
    psf_tukey_norm = psf_tukey/np.sum(psf_tukey)
@@ -323,54 +326,10 @@ def PSFMTF(pc):
    sf = sf[0:nyq_idx]
    mtf = mtf[0:nyq_idx]
 
-   # Calculate theoretical MTFs using scan_simulator.py output
-   d = np.arange(0,50.,0.01)
-
-   ## Separately calculate footprint and sampling widths wx, wy, dx, dy
-   wx = 0.093
-   wy = 0.093
-   dx = 0.131
-   dy = 0.036
-
-   # Fundamental SINC function MTF Equations
-   x_foot = np.abs(np.sin(np.pi*d*wx)/(np.pi*d*wx))
-   y_foot = np.abs(np.sin(np.pi*d*wy)/(np.pi*d*wy))
-   x_samp = np.abs(np.sin(np.pi*d*dx)/(np.pi*d*dx))
-   y_samp = np.abs(np.sin(np.pi*d*dy)/(np.pi*d*dy))
-
-   ## Compute Expected MTF: Select one row depending on the swath(s) orientation
-   mtf_exp = x_foot * x_samp * y_foot * y_samp # For Mixtures (System MTF)
-
-   # NEM
-   z_t -= np.min(z_g)
-   z_g -= np.min(z_g)
-   mean_g = np.mean(z_g)
-   mean_t = np.mean(z_t)
-   var_g = np.var(z_g)
-   var_t = np.var(z_t)
-   nem_g_norm = (2*np.sqrt(2*np.log(2)) * np.sqrt(var_g)) / (mean_t - mean_g)
-
-   # Plot MTF
-   if args.view:
-      plt.figure()
-      plt.plot(sf, mtf, 'b')
-      plt.plot(d, mtf_exp, 'r')
-      plt.xlim([0, 10])
-      plt.ylim([0,1])
-      plt.xlabel(r'Spatial Frequency, $\xi$ $\left[\frac{cyc}{m}\right]$', fontsize=18)
-      plt.ylabel('Modulation Transfer [0-1]', fontsize=18)
-      plt.title('LiDAR Point Spread MTF', fontsize=18)
-      plt.legend(['Empirical', 'Theoretical', 'NEM'], fontsize=16)
-      xticks = np.arange(0, 11., 1)
-      yticks = np.arange(0, 1.1, 0.1)
-      plt.xticks(xticks)
-      plt.yticks(yticks)
-      plt.show()
-
    return mtf, sf
 
 
-def LSFMTF(pc):
+def LSFMTF(pc, sampling=0.001, tuning=1):
    """
    Compute LSF-based MTF from input point cloud data of a line-source target.
    Units of point cloud XYZ should be in meters for correct MTF plot scaling.
@@ -383,6 +342,9 @@ def LSFMTF(pc):
    5. Rotate all points about Z axis about centroid until they lie in X-Z plane
    6. Supersample the resulting 1D LSF to 1mm sampling
    7. Take Fourier Transform of supersampled LSF to get MTF
+
+   Sampling = new sampling of PSF. Default is 1mm.
+   Tuning = Scale factor 0-1 to adjust Tukey filter size if necessary.
    """
    # Warn if point cloud appears large
    if len(pc) > 50000:
@@ -390,8 +352,6 @@ def LSFMTF(pc):
       re = input('Proceed? ')
       if not re.lower() in ['y', 'yes']:
          sys.exit(1)
-
-   sampling = 0.001 # [m] (new sampling of LSF)
 
    # Apply base XY offset to data for viewing
    offset_x = np.min(pc['x'])
@@ -537,7 +497,7 @@ def LSFMTF(pc):
    lsf_rs = rs_linear(bins_rs)
 
    ## 7. Apply Tukey Filter
-   tukey_scale = 4.0 # scale factor * FWHM . ### See if you can programmatically set tukey scale. Maybe using Est FWHM or something
+   tukey_scale = 4.0*tuning # scale factor * FWHM . ### See if you can programmatically set tukey scale. Maybe using Est FWHM or something
    window_size = np.min([np.round(tukey_scale * fwhm_est * (1/sampling)).astype(int), bins_rs.shape[0]])
    alpha = 0.8
    tukey = sig.windows.tukey(window_size, alpha=alpha)
@@ -573,55 +533,6 @@ def LSFMTF(pc):
 
    lsf_tukey = lsf_rs_n * tukey_pad
 
-   if args.view:
-      xp_tv = xp_t - centroid
-      xp_gv = xp_g - centroid
-
-      lsf_rs_v = lsf_rs - np.min(zp_g)
-      zp_tv = zp_t - np.min(zp_g)
-      zp_gv = zp_g - np.min(zp_g)
-
-      lsf_rs_v = lsf_rs_v - np.mean(zp_gv)
-      zp_tv = zp_tv - np.mean(zp_gv)
-      zp_gv = zp_gv - np.mean(zp_gv)
-
-      plt.figure(figsize=(14,6))
-      plt.subplot(1,2,1)
-      plt.scatter(xp_tv, zp_tv, c='C2')
-      plt.scatter(xp_gv, zp_gv, c='k')
-      plt.plot(bins_rs, lsf_rs_v, c='C3', alpha=0.9)
-      plt.legend(['Target Points',
-                  'Ground Points',
-                  'LSF Fit'],
-                  loc='upper right', fontsize=14)
-      plt.xlabel('Radius from Centroid [m]', fontsize=18)
-      plt.ylabel('Z [m]', fontsize=18)
-      plt.ylim([-0.06, 0.4])
-      plt.xticks(fontsize=14)
-      yticks = np.arange(0, 0.5, 0.1)
-      plt.yticks(yticks, fontsize=12)
-      plt.grid(ls='solid', c='k', alpha=0.15)
-
-      # Plot of Normalized LSF Fit and Tukey Filter
-      plt.subplot(1,2,2)
-      plt.plot(bins_rs, lsf_rs_n, c='C3')
-      plt.plot(bins_rs, lsf_tukey, c='C0')
-      plt.plot(bins_rs, tukey_pad, c='k', ls='dashed')
-      plt.legend(['Normalized LSF Fit',
-                  'Tukey-Filtered LSF Fit',
-                  r'Tukey Filter ($\alpha$ = %.1f)' % (alpha)],
-                  loc='upper right', fontsize=14)
-      plt.xlabel('Radius from Centroid [m]', fontsize=18)
-      plt.ylabel('Normalized Z', fontsize=18)
-      plt.ylim([-0.14, 1.08])
-      plt.xticks(fontsize=14)
-      yticks2 = np.arange(0, 1.2, 0.2)
-      plt.yticks(yticks2, fontsize=14)
-      plt.grid(ls='solid', c='k', alpha=0.15)
-      plt.tight_layout()
-      plt.show()
-
-
    ## 8. Take Fourier Transform.
    # Normalize the PSF so sum = 1
    lsf_tukey_norm = lsf_tukey/np.sum(lsf_tukey)
@@ -635,80 +546,6 @@ def LSFMTF(pc):
    nyq_idx = np.argmin(np.abs(sf - nyquist))
    sf = sf[0:nyq_idx]
    mtf = mtf[0:nyq_idx]
-
-   # Calculate theoretical MTF
-   d = np.arange(0,50.,0.01)
-
-   ## Separately calculate footprint and sampling widths wx, wy, dx, dy
-   wx = 0.093
-   wy = 0.093
-   dx = 0.131
-   dy = 0.036
-
-   # Fundamental SINC function MTF Equations
-   x_foot = np.abs(np.sin(np.pi*d*wx)/(np.pi*d*wx))
-   y_foot = np.abs(np.sin(np.pi*d*wy)/(np.pi*d*wy))
-   x_samp = np.abs(np.sin(np.pi*d*dx)/(np.pi*d*dx))
-   y_samp = np.abs(np.sin(np.pi*d*dy)/(np.pi*d*dy))
-
-   ## Compute Expected MTF: Select one row depending on the swath(s) orientation
-   # mtf_exp = x_foot * x_samp * y_foot * y_samp # For Mixtures (System MTF)
-   # mtf_exp = y_foot * y_samp # For Perpendicular Swaths (Along-Track MTF)
-   mtf_exp = x_foot * x_samp # For Parallel Swaths (Across-Track MTF)
-
-   # NEM
-   z_t -= np.min(z_g)
-   z_g -= np.min(z_g)
-   mean_g = np.mean(z_g)
-   mean_t = np.mean(z_t)
-   var_g = np.var(z_g)
-   var_t = np.var(z_t)
-   nem_g_norm = (2*np.sqrt(2*np.log(2)) * np.sqrt(var_g)) / (mean_t - mean_g)
-
-   # Plot MTF
-   if args.view:
-      plt.figure(figsize=(7.5,5.42))
-      plt.plot(sf, mtf, c='C0')
-      plt.plot(d, mtf_exp, c='C3', ls='dashed')
-
-      # Find intersection of NEM and MTF, plot horizontal and vertical lines
-      sf = sf.reshape((len(sf), 1))
-      mtf = mtf.reshape((len(mtf), 1))
-      spec = np.hstack((sf, mtf))
-      sf_d, mtf_rs = resample_data(spec, np.min(sf), np.max(sf), step=0.01, oob=0)
-      delta = mtf_rs - np.ones(sf_d.shape)*nem_g_norm
-      zerocross = ((np.roll(np.sign(delta), 1) - np.sign(delta)) != 0).astype(int)
-      zerocross[0] = 0
-      idx = np.argmax(zerocross) # should always return the first sign change
-      sf_limit = (sf_d[idx] + sf_d[idx-1]) / 2
-
-      nemline = np.array([[0, nem_g_norm],
-                          [sf_limit, nem_g_norm]])
-      limline = np.array([[sf_limit, 0],
-                          [sf_limit, nem_g_norm]])
-
-      nemline_x = np.array([0, sf_limit])
-      nemline_y = np.array([nem_g_norm, nem_g_norm])
-      limitline_x = np.array([sf_limit, sf_limit])
-      limitline_y = np.array([0, nem_g_norm])
-
-      tmp = sf_d[:idx]
-      plt.plot(tmp, np.ones(tmp.shape)*(nem_g_norm), c='k', ls=(0, (1,1)), lw=2)
-
-      plt.plot(nemline_x,nemline_y, c=[0.,0.,1.,0.5], ls='solid', lw=2)
-      plt.plot(limitline_x,limitline_y, c=[0.,0.,1.,0.7], ls='solid', lw=2)
-      plt.xlim([0, 15])
-      plt.ylim([0,1])
-      plt.xlabel(r'Spatial Frequency, $\xi$ $\left[\frac{cyc}{m}\right]$', fontsize=18)
-      plt.ylabel('MTF', fontsize=18)
-      plt.legend(['Empirical', 'Theoretical', 'NEM'], fontsize=14)
-      xticks = np.arange(0, 16., 1)
-      yticks = np.arange(0, 1.1, 0.1)
-      plt.xticks(xticks, fontsize=14)
-      plt.yticks(yticks, fontsize=14)
-      plt.grid(ls='solid', c='k', alpha=0.15)
-      plt.tight_layout()
-      plt.show()
 
    return mtf, sf
 
@@ -799,6 +636,17 @@ def ROITool(pc, args):
    regions of a larger point cloud.
    Point cloud will be saved to the output folder designated by args.output as a
    readable .csv file.
+   MacOS Controls:
+     - Use mouse to zoom and re-orient point cloud
+     - Hold Apple / Command, then click and drag a rectangular region that will
+       highlight selected points
+     - You can draw multiple rectangular regions.
+     - When finished, press <Enter> in your terminal window to save those points
+       into the ROI.
+     - To clear the selected points, simply right click anywhere in the point
+       cloud viewer.
+   I don't know the controls for Windows, but I imagine it's very similar. Maybe
+   instead of the Apple / Command key, it's just <Shift> on Windows.
    """
    # Get base filename for ROI file creation
    basename = os.path.basename(args.input).split('.')[0]
@@ -1315,9 +1163,6 @@ if __name__ == '__main__':
    ap.add_argument('--method', '-m', choices=['psf', 'lsf', 'esf', 'ctf'],
                      default=None, help='Use PSF, LSF, CTF, or ESF to \
                      calculate MTF')
-   ap.add_argument('--units', '-u', default='m', type=str,
-                     help='Units for MTF plots. {p, m} for cyc/pix or cyc/m \
-                     respectively')
    ap.add_argument('--save', '-s', help='Automatically save MTF figures',
                      default=False)
    ap.add_argument('--view', '-v', action='store_true', help='--view to view \
