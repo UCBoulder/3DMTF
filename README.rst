@@ -63,24 +63,29 @@ These files contain column headers X, Y, Z for LSF MTF methods and X, Y, Z, T fo
 
 #. 1-single-alongtrack-lsfmtf.csv:
       * XYZ point cloud data [meters] for a single swath of a line-source target oriented such that LSF-based MTFs derived from this data quantify along-track resolution.
+      * Target is suspended 30cm above the ground.
 
 #. 2-single-acrosstrack-lsfmtf.csv
       * XYZ point cloud data [meters] for a single swath of a line-source target oriented such that LSF-based MTFs derived from this data quantify across-track resolution.
+      * Target is suspended 30cm above the ground. (Same target as 1, orthogonal swath / flight)
 
 #. 3-multi-mixture-lsfmtf.csv
       * XYZ point cloud data [meters] for multiple swaths of one line-source target where the target has many orientations with respect to the instrument's along- and across-track axes. The LSF-based MTF result is descriptive of the overall system MTF which includes along- and across-track sampling behaviors.
+      * Target is suspended 30cm above the ground.
       * Point cloud data from 1 and 2 are contained within 3.
 
 #. 4-topographic-psfmtf.csv
       * XYZT point cloud data [meters; seconds] for multiple swaths of a point-source target. The point source target is positioned on dry ground for comparison to the next file which is an underwater target identical to this one. Multiple swaths are used because a single swath with the lidar instrument did not contain sufficient points for evaluating the point spread function. Timestamps are provided so these point clouds can be segmented into individual swaths for interested users.
+      * Target is suspended 30cm above the ground.
 
 #. 5-bathymetric-psfmtf.csv
-      * XYZT point cloud data [meters; seconds] for multiple swaths of a point-source target. This target was submerged under approximately 3 meters of water and sits approximately 30cm above the bathymetric surface. The difference in resulting point spread (and therefore MTF) can be attributed to a number of effects, such as:
+      * XYZT point cloud data [meters; seconds] for multiple swaths of a point-source target. This target was submerged under approximately 3 meters of water. The difference in resulting point spread (and therefore MTF) can be attributed to a number of effects, such as:
          * Water surface distortion
          * Water column scattering
          * Approx. 3m of additional range / beam spread
          * GPS/IMU drift errors between swaths
          * and more
+      * Target is suspended 30cm above the bathymetric surface.
       * Like 4, multiple swaths are used because a single swath with the lidar instrument did not contain sufficient points for evaluating the point spread function. Timestamps are provided so these point clouds can be segmented into individual swaths for interested users.
 
 
