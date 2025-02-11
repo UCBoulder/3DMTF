@@ -49,15 +49,17 @@ Primary command line arguments:
    * -i is the input point cloud file
    * -o is the folder to save any output
    * -m is the method of mtf {lsf or psf}
-   * -r is a flag that tells the program the data is already ROIed
-   * -v views the MTF plot when finished
+   * -r is a flag used to indicate the point cloud data is already a region-of-interest (ROI)
+   * -v to view the MTF plot when finished
 
-To run the provided ROI Drawing Tool on your point cloud data prior to computing MTF (very large point clouds with extra targets/features will not result in a successful outcome), remove the -r flag/argument from the command line command.
+To run the provided ROI Drawing Tool on your point cloud data prior to computing MTF (very large point clouds with extra targets/features will not result in a successful outcome), remove the -r flag/argument from the command line command. PPTK is required for the ROI Tool.
 
 
 Demo
 ====
-Example data can be found in the demo folder. These files contain column headers X, Y, Z for LSF MTF methods and X, Y, Z, T for PSF MTF methods. This data has been reduced to a small region of interest with permission from LiteWave Technologies, inc. The following are short descriptions of each file:
+Example data can be found in the demo folder. This data has been provided and reduced to a small region of interest with permission from `Orion Space Solutions <https://orion.arcfield.com/>`_ (formerly LiteWave Technologies, Inc).
+
+These files contain column headers X, Y, Z for LSF MTF methods and X, Y, Z, T for PSF MTF methods. The following are short descriptions of each file:
 
 #. 1-single-alongtrack-lsfmtf.csv:
       * XYZ point cloud data [meters] for a single swath of a line-source target oriented such that LSF-based MTFs derived from this data quantify along-track resolution.
