@@ -34,16 +34,13 @@ This code was developed and tested with Python v.3.8.6. Other versions of Python
 Example Usage
 =============
 To see a list of supported command line arguments, use:
-.. code-block:: console
-   python mtf3d.py -h
+``python mtf3d.py -h``
 
 To run the LSF MTF method on a point cloud (using demo file 1 here), use this command in terminal:
-.. code-block:: console
-   python mtf3d.py -i ./demo/1-single-alongtrack-lsfmtf.csv -o . -m lsf -r -v
+``python mtf3d.py -i ./demo/1-single-alongtrack-lsfmtf.csv -o . -m lsf -r -v``
 
 To run the PSF MTF method on a point cloud (using demo file 4 here), use this command in terminal:
-.. code-block:: console
-   python mtf3d.py -i ./demo/4-topographic-psfmtf.csv -o . -m psf -r -v
+``python mtf3d.py -i ./demo/4-topographic-psfmtf.csv -o . -m psf -r -v``
 
 Primary command line arguments:
    * -i is the input point cloud file
@@ -67,7 +64,7 @@ Example data can be found in the demo folder. These files contain column headers
 
 #. 3-multi-mixture-lsfmtf.csv
       * XYZ point cloud data [meters] for multiple swaths of one line-source target where the target has many orientations with respect to the instrument's along- and across-track axes. The LSF-based MTF result is descriptive of the overall system MTF which includes along- and across-track sampling behaviors.
-      * Point cloud data from 1 and 2 are just part of the point cloud in 3.
+      * Point cloud data from 1 and 2 are contained within 3.
 
 #. 4-topographic-psfmtf.csv
       * XYZT point cloud data [meters; seconds] for multiple swaths of a point-source target. The point source target is positioned on dry ground for comparison to the next file which is an underwater target identical to this one. Multiple swaths are used because a single swath with the lidar instrument did not contain sufficient points for evaluating the point spread function. Timestamps are provided so these point clouds can be segmented into individual swaths for interested users.
