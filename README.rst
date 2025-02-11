@@ -17,18 +17,18 @@ The paper linked above contains relevant background context and demonstrations o
 Dependencies
 ============
 This code was developed and tested with Python v.3.8.6. Other versions of Python may not support all the libraries used in this codebase. Consider using a virtualenv or pyenv environment running 3.8.6.
-* datetime
-* matplotlib
-* pandas
-* pptk (varies with OS and has limited supporting Python Versions)
-* pygame
-* PyQt5 (varies with OS)
-* riceprint (can be installed using "pip install riceprint")
-* ricekey (can be installed using "pip install ricekey")
-* scipy
-* skimage
-* sklearn
-* seaborn
+   * datetime
+   * matplotlib
+   * pandas
+   * pptk (varies with OS and has limited supporting Python Versions)
+   * pygame
+   * PyQt5 (varies with OS)
+   * riceprint (can be installed using "pip install riceprint")
+   * ricekey (can be installed using "pip install ricekey")
+   * scipy
+   * skimage
+   * sklearn
+   * seaborn
 
 
 Example Usage
@@ -45,11 +45,12 @@ To run the PSF MTF method on a point cloud (using demo file 4 here), use this co
 .. code-block:: sh
    python mtf3d.py -i ./demo/4-topographic-psfmtf.csv -o . -m psf -r -v
 
--i is the input point cloud file
--o is the folder to save any output
--m is the method of mtf {lsf or psf}
--r is a flag that tells the program the data is already ROIed
--v views the MTF plot when finished
+Primary command line arguments:
+   * -i is the input point cloud file
+   * -o is the folder to save any output
+   * -m is the method of mtf {lsf or psf}
+   * -r is a flag that tells the program the data is already ROIed
+   * -v views the MTF plot when finished
 
 To run the provided ROI Drawing Tool on your point cloud data prior to computing MTF (very large point clouds with extra targets/features will not result in a successful outcome), remove the -r flag/argument from the command line command.
 
@@ -59,12 +60,10 @@ Demo
 Example data can be found in the demo folder. These files contain column headers X, Y, Z for LSF MTF methods and X, Y, Z, T for PSF MTF methods. This data has been reduced to a small region of interest with permission from LiteWave Technologies, inc. The following are short descriptions of each file:
 
 #. 1-single-alongtrack-lsfmtf.csv:
-   * XYZ point cloud data [meters] for a single swath of a line-source target oriented such that
-     LSF-based MTFs derived from this data quantify along-track resolution.
+      * XYZ point cloud data [meters] for a single swath of a line-source target oriented such that LSF-based MTFs derived from this data quantify along-track resolution.
 
 #. 2-single-acrosstrack-lsfmtf.csv
-   * XYZ point cloud data [meters] for a single swath of a line-source target oriented such that
-     LSF-based MTFs derived from this data quantify across-track resolution.
+      * XYZ point cloud data [meters] for a single swath of a line-source target oriented such that LSF-based MTFs derived from this data quantify across-track resolution.
 
 #. 3-multi-mixture-lsfmtf.csv
    * XYZ point cloud data [meters] for multiple swaths of one line-source target where the target
